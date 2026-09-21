@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%23F4EFE3'/%3E%3Crect x='30' y='30' width='50' height='50' fill='%23D7263D'/%3E%3Ccircle cx='125' cy='55' r='25' fill='%23FFD100'/%3E%3Cpolygon points='90,120 60,160 120,160' fill='%231B4F9C'/%3E%3C/svg%3E">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Bauhaus Strings">
+
+<title>Bauhaus Strings</title>
+
+<script src="https://cdn.jsdelivr.net/npm/abcjs@6/dist/abcjs-basic-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root {
+    color-scheme: light dark;
+
+    --bauhaus-red: #E03C31;
+    --bauhaus-blue: #004B8D;
+    --bauhaus-yellow: #F2B705;
+    --bauhaus-black: #111111;
+
+    --bg-main: #F5F5F5;
+    --bg-header: #111111;
+    --text-header: #F5F5F5;
+    --bg-editor: #FFFFFF;
+    --bg-paper: #FFFFFF;
+
+    --text-main: #111111;
+    --border-color: #111111;
+    --shadow-color: #111111;
+
+    --toggle-off: #CCCCCC;
+    --empty-state: #888888;
+
+    --button-text: #FFFFFF;
+    --stop-text: #FFFFFF;
+
+    --syn-key: #C62828;
+    --syn-value: #004B8D;
+    --syn-bar: #A66A00;
+    --syn-chord: #C62828;
+    --syn-string: #004B8D;
+    --syn-comment: #777777;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bauhaus-red: #FF5245;
+        --bauhaus-blue: #4B8DFF;
+        --bauhaus-yellow: #FFD033;
+        --bauhaus-black: #000000;
+
+        --bg-main: #121212;
+        --bg-header: #000000;
+        --text-header: #F5F5F5;
+        --bg-editor: #1A1A1A;
+        --bg-paper: #1E1E1E;
+
+        --text-main: #F5F5F5;
+        --border-color: #F5F5F5;
+        --shadow-color: #000000;
+
+        --toggle-off: #444444;
+        --empty-state: #666666;
+
+        --button-text: #000000;
+        --stop-text: #000000;
+
+        --syn-key: #FF6B6B;
+        --syn-value: #74A9FF;
+        --syn-bar: #FFD166;
+        --syn-chord: #FF6B6B;
+        --syn-string: #74A9FF;
+        --syn-comment: #9A9A9A;
+    }
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Futura", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+header {
+    background-color: var(--bg-header);
+    border-bottom: 4px solid var(--bauhaus-yellow);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    z-index: 10;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--text-header);
+}
+
+.controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+button {
+    background: var(--bauhaus-blue);
+    color: var(--button-text);
+    border: 3px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 0;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px var(--shadow-color);
+    transition: transform 0.05s, box-shadow 0.05s, background-color 0.1s;
+    text-transform: uppercase;
+}
+
+button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px var(--shadow-color);
+}
+
+button.stop-btn {
+    background: var(--bauhaus-red);
+    color: var(--stop-text);
+}
+
+button:disabled {
+    background: var(--toggle-off);
+    color: var(--bg-main);
+    border-color: var(--border-color);
+    box-shadow: 4px 4px 0px var(--shadow-color);
+    cursor: default;
+}
+
+button:disabled:active {
+    transform: none;
+    box-shadow: 4px 4px 0px var(--shadow-color);
+}
+
+.switch-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    border: 3px solid var(--border-color);
+    padding: 8px 12px;
+    background: var(--bg-main);
+    color: var(--text-main);
+    box-shadow: 4px 4px 0px var(--shadow-color);
+}
+
+.switch-container input {
+    display: none;
+}
+
+.slider {
+    width: 40px;
+    height: 20px;
+    background: var(--toggle-off);
+    border: 2px solid var(--border-color);
+    position: relative;
+    transition: background 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+.slider::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--border-color);
+    top: -2px;
+    left: -2px;
+    border: 2px solid var(--border-color);
+    transition: transform 0.25s cubic-bezier(0.4, 0.0, 0.2, 1), background 0.25s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+.switch-container input:checked + .slider {
+    background: var(--bauhaus-red);
+}
+
+.switch-container input:checked + .slider::after {
+    transform: translateX(20px);
+    background: var(--bg-main);
+}
+
+.switch-container.format-switch input:checked + .slider {
+    background: var(--bauhaus-yellow);
+}
+
+.switch-container.instrument-switch input:checked + .slider {
+    background: var(--bauhaus-blue);
+}
+
+.switch-label-text {
+    min-width: 70px;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.editor-pane {
+    width: 35%;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    border-right: 4px solid var(--border-color);
+    background: var(--bg-editor);
+    position: relative;
+    min-height: 0;
+}
+
+.editor-wrapper {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+}
+
+.highlight-layer,
+textarea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1.6;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-y: auto;
+    border: none;
+    margin: 0;
+    text-transform: none;
+}
+
+.highlight-layer {
+    pointer-events: none;
+    z-index: 1;
+    color: var(--text-main);
+    background: transparent;
+}
+
+textarea {
+    z-index: 2;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--bauhaus-red);
+    outline: none;
+    resize: none;
+}
+
+textarea::placeholder {
+    color: var(--empty-state);
+    font-weight: normal;
+    text-transform: none;
+}
+
+.hl-key {
+    color: var(--syn-key);
+    font-weight: 900;
+}
+
+.hl-val {
+    color: var(--syn-value);
+}
+
+.hl-bar {
+    color: var(--syn-bar);
+    font-weight: 900;
+}
+
+.hl-chord {
+    color: var(--syn-chord);
+    font-weight: 900;
+}
+
+.hl-string {
+    color: var(--syn-string);
+}
+
+.hl-comment {
+    color: var(--syn-comment);
+}
+
+.preview-pane {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
+    background: var(--bg-main);
+    display: flex;
+    justify-content: center;
+    min-height: 0;
+}
+
+#paper {
+    width: 100%;
+    max-width: 800px;
+    background: var(--bg-paper);
+    border: 4px solid var(--border-color);
+    padding: 20px;
+    box-sizing: border-box;
+    min-height: 200px;
+}
+
+#paper svg {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+    #paper svg path,
+    #paper svg rect,
+    #paper svg line {
+        fill: var(--text-main) !important;
+        stroke: var(--text-main) !important;
+    }
+
+    #paper svg text {
+        fill: var(--text-main) !important;
+    }
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 150px;
+    font-weight: 800;
+    color: var(--empty-state);
+    letter-spacing: 4px;
+    border: 4px dashed var(--empty-state);
+}
+
+.hide-tab .abcjs-tablature {
+    display: none !important;
+}
+
+footer {
+    background-color: var(--bg-header);
+    border-top: 4px solid var(--bauhaus-yellow);
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    z-index: 10;
+}
+
+footer button {
+    flex: 1 1 160px;
+    font-size: 0.72rem;
+    padding: 12px 10px;
+}
+
+footer button.secondary {
+    background: var(--bg-main);
+    color: var(--text-main);
+}
+
+footer button.primary {
+    background: var(--bauhaus-red);
+    color: var(--stop-text);
+}
+
+@media (max-width: 800px) {
+    main {
+        flex-direction: column;
+    }
+
+    .editor-pane {
+        width: 100%;
+        height: 40%;
+        min-width: unset;
+        border-right: none;
+        border-bottom: 4px solid var(--border-color);
+    }
+
+    .preview-pane {
+        height: 60%;
+        padding: 15px;
+    }
+
+    header {
+        padding: 10px;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    footer button {
+        flex: 1 1 45%;
+    }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <svg width="40" height="40" viewBox="0 0 40 40" style="background:#FFFFFF; border: 3px solid #FFFFFF;">
+            <circle cx="20" cy="20" r="12" fill="#E03C31"></circle>
+            <path d="M20 8 L32 28 L8 28 Z" fill="#004B8D"></path>
+            <line x1="14" y1="0" x2="14" y2="40" stroke="#111111" stroke-width="2"></line>
+            <line x1="20" y1="0" x2="20" y2="40" stroke="#111111" stroke-width="2"></line>
+            <line x1="26" y1="0" x2="26" y2="40" stroke="#111111" stroke-width="2"></line>
+        </svg>
+        <h1>Bauhaus Strings</h1>
+    </div>
+
+    <div class="controls">
+        <label class="switch-container instrument-switch">
+            <input type="checkbox" id="instrumentToggle">
+            <span class="slider"></span>
+            <span class="switch-label-text" id="instrumentLabel">Guitar</span>
+        </label>
+        <label class="switch-container">
+            <input type="checkbox" id="tabToggle" checked>
+            <span class="slider"></span> Show Tab
+        </label>
+        <button id="playBtn" disabled>Play</button>
+        <button id="stopBtn" class="stop-btn" disabled>Stop</button>
+    </div>
+</header>
+
+<main>
+    <div class="editor-pane">
+        <div class="editor-wrapper">
+            <pre class="highlight-layer" id="highlightLayer"></pre>
+            <textarea id="abcInput" spellcheck="false" placeholder="X:1
+T:STUDY NO. 1
+M:4/4
+L:1/8
+Q:1/4=80
+K:C clef=treble
+C2 E2 G2 c2 | e2 g2 c'4 |"></textarea>
+        </div>
+    </div>
+
+    <div class="preview-pane" id="previewPane">
+        <div id="paper">
+            <div class="empty-state">AWAITING ABC INPUT</div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <input type="file" id="fileInput" accept=".txt,.abc,text/plain" style="display:none;">
+    <button id="openBtn">Open TXT / ABC</button>
+    <button id="downloadAbcBtn" class="secondary">Download ABC</button>
+    <label class="switch-container format-switch">
+        <input type="checkbox" id="formatToggle" checked>
+        <span class="slider"></span>
+        <span class="switch-label-text" id="formatLabel">Export: SVG</span>
+    </label>
+    <button id="downloadScoreBtn" class="primary">Download Score</button>
+</footer>
+
+<script>
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const uiCtx = new AudioContext();
+
+let synth = null;
+let currentFileName = "score";
+
+const highlightLayer = document.getElementById("highlightLayer");
+const abcInput = document.getElementById("abcInput");
+const paper = document.getElementById("paper");
+const previewPane = document.getElementById("previewPane");
+const playBtn = document.getElementById("playBtn");
+const stopBtn = document.getElementById("stopBtn");
+const tabToggle = document.getElementById("tabToggle");
+const instrumentToggle = document.getElementById("instrumentToggle");
+const instrumentLabel = document.getElementById("instrumentLabel");
+
+const fileInput = document.getElementById("fileInput");
+const openBtn = document.getElementById("openBtn");
+const downloadAbcBtn = document.getElementById("downloadAbcBtn");
+const formatToggle = document.getElementById("formatToggle");
+const formatLabel = document.getElementById("formatLabel");
+const downloadScoreBtn = document.getElementById("downloadScoreBtn");
+
+// Instrument definitions
+const INSTRUMENTS = {
+    guitar: {
+        name: "Guitar",
+        tuning: ["E,", "A,", "D", "G", "B", "e"],
+        strings: 6,
+        abcjsInst: "guitar",
+        shortLabel: "TAB"
+    },
+    ukulele: {
+        name: "Ukulele",
+        tuning: ["G,", "C", "E", "A"], // G3-C4-E4-A4
+        strings: 4,
+        abcjsInst: "ukulele",
+        shortLabel: "UKE"
+    }
+};
+
+function getCurrentInstrument() {
+    return instrumentToggle.checked ? "ukulele" : "guitar";
+}
+
+// --- Click Sounds (distinct ON and OFF) ---
+
+let clickNoiseBuffer = null;
+
+function getClickNoiseBuffer() {
+    if (!clickNoiseBuffer) {
+        const len = Math.floor(uiCtx.sampleRate * 0.015);
+        clickNoiseBuffer = uiCtx.createBuffer(1, len, uiCtx.sampleRate);
+        const data = clickNoiseBuffer.getChannelData(0);
+        for (let i = 0; i < len; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
+        }
+    }
+    return clickNoiseBuffer;
+}
+
+function playClickOn() {
+    try {
+        if (uiCtx.state === "suspended") uiCtx.resume();
+        const now = uiCtx.currentTime;
+
+        const noise = uiCtx.createBufferSource();
+        noise.buffer = getClickNoiseBuffer();
+        const bandpass = uiCtx.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(3200, now);
+        bandpass.Q.value = 1.2;
+        const noiseGain = uiCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.6, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+        noise.connect(bandpass).connect(noiseGain).connect(uiCtx.destination);
+        noise.start(now);
+        noise.stop(now + 0.02);
+
+        const osc = uiCtx.createOscillator();
+        const oscGain = uiCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1800, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.012);
+        oscGain.gain.setValueAtTime(0.25, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
+        osc.connect(oscGain).connect(uiCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.02);
+    } catch (e) {}
+}
+
+function playClickOff() {
+    try {
+        if (uiCtx.state === "suspended") uiCtx.resume();
+        const now = uiCtx.currentTime;
+
+        const noise = uiCtx.createBufferSource();
+        noise.buffer = getClickNoiseBuffer();
+        const bandpass = uiCtx.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(1600, now);
+        bandpass.Q.value = 0.8;
+        const noiseGain = uiCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.45, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+        noise.connect(bandpass).connect(noiseGain).connect(uiCtx.destination);
+        noise.start(now);
+        noise.stop(now + 0.015);
+
+        const osc = uiCtx.createOscillator();
+        const oscGain = uiCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(500, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.015);
+        oscGain.gain.setValueAtTime(0.2, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+        osc.connect(oscGain).connect(uiCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.025);
+    } catch (e) {}
+}
+
+function playButtonClick() {
+    try {
+        if (uiCtx.state === "suspended") uiCtx.resume();
+        const now = uiCtx.currentTime;
+
+        const noise = uiCtx.createBufferSource();
+        noise.buffer = getClickNoiseBuffer();
+        const bandpass = uiCtx.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(2400, now);
+        bandpass.Q.value = 0.9;
+        const noiseGain = uiCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
+        noise.connect(bandpass).connect(noiseGain).connect(uiCtx.destination);
+        noise.start(now);
+        noise.stop(now + 0.02);
+
+        const osc = uiCtx.createOscillator();
+        const oscGain = uiCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.018);
+        oscGain.gain.setValueAtTime(0.18, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
+        osc.connect(oscGain).connect(uiCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.025);
+    } catch (e) {}
+}
+
+function playToggleSound(isOn) {
+    if (isOn) {
+        playClickOn();
+    } else {
+        playClickOff();
+    }
+}
+
+// --- Syntax Highlighting ---
+
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function highlightLine(line) {
+    if (/^\s*%/.test(line)) {
+        return '<span class="hl-comment">' + line + '</span>';
+    }
+
+    if (/^[A-Za-z]:/.test(line)) {
+        const colonIndex = line.indexOf(":");
+        const key = line.substring(0, colonIndex + 1);
+        const value = line.substring(colonIndex + 1);
+
+        return '<span class="hl-key">' + key + '</span><span class="hl-val">' + value + '</span>';
+    }
+
+    return line.replace(/("[^"]*")|(\[)|(\])|(\|\]|\[\||\|)/g, function(match, str, open, close, bar) {
+        if (str) {
+            return '<span class="hl-string">' + str + '</span>';
+        }
+
+        if (open || close) {
+            return '<span class="hl-chord">' + match + '</span>';
+        }
+
+        if (bar) {
+            return '<span class="hl-bar">' + match + '</span>';
+        }
+
+        return match;
+    });
+}
+
+function updateHighlight() {
+    const text = abcInput.value;
+
+    if (!text) {
+        highlightLayer.innerHTML = "";
+        return;
+    }
+
+    const escaped = escapeHtml(text);
+    const lines = escaped.split("\n");
+    const highlighted = lines.map(highlightLine).join("\n");
+
+    highlightLayer.innerHTML = highlighted + "\n";
+
+    highlightLayer.scrollTop = abcInput.scrollTop;
+    highlightLayer.scrollLeft = abcInput.scrollLeft;
+}
+
+// --- Voice Detection ---
+
+function detectVoices(abc) {
+    const voicePattern = /^\s*\[?V:([^\]\s]+)/gm;
+    const voices = [];
+    let match;
+    while ((match = voicePattern.exec(abc)) !== null) {
+        if (!voices.includes(match[1])) {
+            voices.push(match[1]);
+        }
+    }
+    return voices;
+}
+
+function getTablatureOption() {
+    if (!tabToggle.checked) {
+        return [];
+    }
+
+    const instKey = getCurrentInstrument();
+    const instrument = INSTRUMENTS[instKey];
+    const voices = detectVoices(abcInput.value);
+
+    if (voices.length === 0) {
+        return [
+            {
+                instrument: instrument.abcjsInst,
+                tuning: instrument.tuning,
+                label: instrument.shortLabel
+            }
+        ];
+    }
+
+    return voices.map(function(voice, index) {
+        return {
+            instrument: instrument.abcjsInst,
+            tuning: instrument.tuning,
+            label: instrument.shortLabel + " " + (index + 1),
+            voice: voice
+        };
+    });
+}
+
+// --- Render ---
+
+function renderABC() {
+    updateHighlight();
+
+    if (synth) {
+        try {
+            synth.stop();
+        } catch (error) {}
+        synth = null;
+    }
+
+    stopBtn.disabled = true;
+
+    if (abcInput.value.trim() === "") {
+        paper.innerHTML = '<div class="empty-state">AWAITING ABC INPUT</div>';
+        playBtn.disabled = true;
+        return;
+    }
+
+    playBtn.disabled = false;
+
+    if (!tabToggle.checked) {
+        previewPane.classList.add("hide-tab");
+    } else {
+        previewPane.classList.remove("hide-tab");
+    }
+
+    const renderOptions = {
+        responsive: "resize",
+        staffwidth: 800,
+        tablature: getTablatureOption()
+    };
+
+    ABCJS.renderAbc("paper", abcInput.value, renderOptions);
+}
+
+// --- Download Helpers ---
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(function() {
+        URL.revokeObjectURL(url);
+    }, 1000);
+}
+
+function buildExportSvg() {
+    if (!abcInput.value.trim()) {
+        return null;
+    }
+
+    const holder = document.createElement("div");
+
+    holder.style.position = "absolute";
+    holder.style.left = "-10000px";
+    holder.style.top = "0";
+    holder.style.width = "800px";
+    holder.style.background = "#FFFFFF";
+
+    document.body.appendChild(holder);
+
+    const renderOptions = {
+        responsive: false,
+        staffwidth: 800,
+        tablature: getTablatureOption()
+    };
+
+    try {
+        ABCJS.renderAbc(holder, abcInput.value, renderOptions);
+    } catch (error) {
+        holder.remove();
+        return null;
+    }
+
+    const svg = holder.querySelector("svg");
+
+    if (!svg) {
+        holder.remove();
+        return null;
+    }
+
+    const rect = svg.getBoundingClientRect();
+    const width = Math.max(1, Math.ceil(rect.width));
+    const height = Math.max(1, Math.ceil(rect.height));
+
+    const clone = svg.cloneNode(true);
+
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("width", width);
+    clone.setAttribute("height", height);
+
+    if (!clone.getAttribute("viewBox")) {
+        clone.setAttribute("viewBox", "0 0 " + width + " " + height);
+    }
+
+    const background = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+    background.setAttribute("x", "0");
+    background.setAttribute("y", "0");
+    background.setAttribute("width", width);
+    background.setAttribute("height", height);
+    background.setAttribute("fill", "#FFFFFF");
+
+    clone.insertBefore(background, clone.firstChild);
+
+    const svgString = new XMLSerializer().serializeToString(clone);
+
+    holder.remove();
+
+    return {
+        string: svgString,
+        width: width,
+        height: height
+    };
+}
+
+async function downloadScore() {
+    const exportData = buildExportSvg();
+
+    if (!exportData) {
+        alert("No score to export yet.");
+        return;
+    }
+
+    if (formatToggle.checked) {
+        const svgFile = '<?xml version="1.0" encoding="UTF-8"?>\n' + exportData.string;
+        const blob = new Blob([svgFile], { type: "image/svg+xml;charset=utf-8" });
+
+        downloadBlob(blob, currentFileName + ".svg");
+        return;
+    }
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("The PDF library is still loading. Try again.");
+        return;
+    }
+
+    const svgBlob = new Blob([exportData.string], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    const image = new Image();
+
+    await new Promise(function(resolve, reject) {
+        image.onload = resolve;
+        image.onerror = reject;
+        image.src = url;
+    });
+
+    const scale = 2;
+    const canvas = document.createElement("canvas");
+
+    canvas.width = exportData.width * scale;
+    canvas.height = exportData.height * scale;
+
+    const context = canvas.getContext("2d");
+
+    context.fillStyle = "#FFFFFF";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    URL.revokeObjectURL(url);
+
+    const imageData = canvas.toDataURL("image/png");
+
+    const jsPDF = window.jspdf.jsPDF;
+
+    const pdf = new jsPDF({
+        orientation: exportData.width > exportData.height ? "landscape" : "portrait",
+        unit: "pt",
+        format: [exportData.width, exportData.height]
+    });
+
+    pdf.addImage(imageData, "PNG", 0, 0, exportData.width, exportData.height);
+    pdf.save(currentFileName + ".pdf");
+}
+
+// --- Event Listeners ---
+
+abcInput.addEventListener("input", renderABC);
+
+abcInput.addEventListener("scroll", function() {
+    highlightLayer.scrollTop = this.scrollTop;
+    highlightLayer.scrollLeft = this.scrollLeft;
+});
+
+instrumentToggle.addEventListener("change", function() {
+    playToggleSound(this.checked);
+    instrumentLabel.textContent = this.checked ? "Ukulele" : "Guitar";
+    renderABC();
+});
+
+tabToggle.addEventListener("change", function() {
+    playToggleSound(this.checked);
+    renderABC();
+});
+
+formatToggle.addEventListener("change", function() {
+    playToggleSound(this.checked);
+    formatLabel.textContent = this.checked ? "Export: SVG" : "Export: PDF";
+});
+
+playBtn.addEventListener("click", async function() {
+    playButtonClick();
+
+    if (!abcInput.value.trim()) {
+        return;
+    }
+
+    try {
+        if (synth) {
+            try {
+                synth.stop();
+            } catch (error) {}
+        }
+
+        synth = new ABCJS.synth.CreateSynth();
+
+        await synth.init({
+            visualSelection: "selection",
+            audioContext: new (window.AudioContext || window.webkitAudioContext)(),
+            options: {
+                chordsOff: true,
+                soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
+                soundFontVolumeMultiplier: 0.8,
+                program: 24,
+                transpose: -12
+            }
+        });
+
+        await synth.prime();
+        synth.start();
+
+        playBtn.disabled = true;
+        stopBtn.disabled = false;
+    } catch (error) {
+        console.error("Playback error", error);
+        alert("Audio playback failed. Please try again.");
+    }
+});
+
+stopBtn.addEventListener("click", function() {
+    playButtonClick();
+
+    if (synth) {
+        try {
+            synth.stop();
+        } catch (error) {}
+    }
+
+    playBtn.disabled = false;
+    stopBtn.disabled = true;
+});
+
+openBtn.addEventListener("click", function() {
+    playButtonClick();
+    fileInput.click();
+});
+
+fileInput.addEventListener("change", function() {
+    const file = this.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    currentFileName = file.name.replace(/\.[^/.]+$/, "") || "score";
+
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+        abcInput.value = event.target.result;
+        renderABC();
+    };
+
+    reader.readAsText(file);
+
+    this.value = "";
+});
+
+downloadAbcBtn.addEventListener("click", function() {
+    playButtonClick();
+
+    if (!abcInput.value.trim()) {
+        alert("Nothing to download yet.");
+        return;
+    }
+
+    const blob = new Blob([abcInput.value], { type: "text/plain;charset=utf-8" });
+
+    downloadBlob(blob, currentFileName + ".abc");
+});
+
+downloadScoreBtn.addEventListener("click", async function() {
+    playButtonClick();
+
+    try {
+        await downloadScore();
+    } catch (error) {
+        console.error("Export error", error);
+        alert("Export failed. Try again.");
+    }
+});
+
+// --- Init ---
+
+renderABC();
+</script>
+</body>
+</html>
